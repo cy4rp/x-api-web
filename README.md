@@ -38,6 +38,9 @@ API キーはすべてサーバー側 (Route Handlers) でのみ使用され、�
 
 ## Vercel での設定手順
 
+- 本番 URL: https://x-api-web-omega.vercel.app
+- プロジェクト: https://vercel.com/shoei-sugitas-projects/x-api-web
+
 1. Vercel Dashboard → Project → **Settings → Environment Variables**
 2. 上記の環境変数を追加 (Production / Preview)
 3. **Deployments → Redeploy** で再デプロイ
