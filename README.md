@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# X API Web
 
-## Getting Started
+X (Twitter) API v2 を組み込んだ Next.js Web アプリ。Vercel にデプロイし、環境変数を設定するだけで動作します。
 
-First, run the development server:
+## 機能
+
+| 機能 | 必要な環境変数 | エンドポイント |
+| --- | --- | --- |
+| ツイート検索 (recent search) | `X_BEARER_TOKEN` | `GET /api/search?q=...` |
+| ユーザー情報 + タイムライン | `X_BEARER_TOKEN` | `GET /api/users/:username` |
+| X でログイン (OAuth 2.0 PKCE) | `X_CLIENT_ID`, `X_CLIENT_SECRET` | `GET /api/auth/login` |
+| ログインユーザー取得 | 同上 | `GET /api/me` |
+| ツイート投稿 | 同上 | `POST /api/tweets` `{ "text": "..." }` |
+| 設定状況の確認 | – | `GET /api/health` |
+
+API キーはすべてサーバー側 (Route Handlers) でのみ使用され、ブラウザには送られません。
+ログイン後のアクセストークンは AES-GCM で暗号化した httpOnly Cookie に保存されます。
+
+## 環境変数
+
+| 変数 | 必須 | 説明 |
+| --- | --- | --- |
+| `X_BEARER_TOKEN` | 検索系を使う場合 | Developer Portal の App-only Bearer Token |
+| `X_CLIENT_ID` | ログイン/投稿を使う場合 | OAuth 2.0 Client ID |
+| `X_CLIENT_SECRET` | ログイン/投稿を使う場合 | OAuth 2.0 Client Secret |
+| `SESSION_SECRET` | 任意 | Cookie 暗号化キー (未設定時は `X_CLIENT_SECRET`) |
+| `APP_URL` | 任意 | 公開 URL (例 `https://x-api-web.vercel.app`)。未設定時は Host ヘッダから自動判定 |
+
+### X Developer Portal 側の設定 (ログイン/投稿を使う場合)
+
+1. https://developer.x.com/en/portal/dashboard でアプリを開く
+2. **User authentication settings** → **Set up**
+   - App permissions: **Read and write**
+   - Type of App: **Web App, Automated App or Bot**
+   - Callback URI: `https://<デプロイ先ドメイン>/api/auth/callback`
+   - Website URL: `https://<デプロイ先ドメイン>`
+3. 発行された **Client ID / Client Secret** を Vercel の環境変数に設定
+
+## Vercel での設定手順
+
+1. Vercel Dashboard → Project → **Settings → Environment Variables**
+2. 上記の環境変数を追加 (Production / Preview)
+3. **Deployments → Redeploy** で再デプロイ
+
+## ローカル開発
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # 値を記入
+npm install
+npm run dev                  # http://localhost:3000
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
