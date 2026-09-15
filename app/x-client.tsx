@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { SearchResponse, Tweet, XUser } from "@/lib/x";
 
@@ -149,7 +150,12 @@ export function XClient({ config, authMsg }: { config: Config; authMsg: string |
     <div className="min-h-full bg-zinc-50 text-zinc-900">
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-          <h1 className="text-xl font-semibold">X API Web</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-semibold">X API Web</h1>
+            <Link href="/benchmark" className="text-sm text-sky-600 hover:underline">
+              マーケティング教科書 →
+            </Link>
+          </div>
           <div className="flex flex-wrap gap-2">
             <Badge ok={config.bearerToken} label="X_BEARER_TOKEN" />
             <Badge ok={config.oauth} label="OAuth (CLIENT_ID/SECRET)" />

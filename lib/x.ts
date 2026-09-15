@@ -27,7 +27,8 @@ async function xFetch<T>(path: string, token: string, init: RequestInit = {}): P
   return body as T;
 }
 
-const TWEET_FIELDS = "created_at,public_metrics,author_id,lang";
+const TWEET_FIELDS = "created_at,public_metrics,author_id,lang,attachments,entities,referenced_tweets";
+const MEDIA_FIELDS = "media_key,type,url,preview_image_url,alt_text,width,height";
 const USER_FIELDS = "profile_image_url,description,public_metrics,verified,created_at";
 
 export type Tweet = {
@@ -37,6 +38,19 @@ export type Tweet = {
   author_id?: string;
   lang?: string;
   public_metrics?: { retweet_count: number; reply_count: number; like_count: number; quote_count: number };
+  attachments?: { media_keys?: string[] };
+  entities?: { hashtags?: { tag: string }[]; urls?: { expanded_url?: string }[]; mentions?: { username: string }[] };
+  referenced_tweets?: { type: "retweeted" | "replied_to" | "quoted"; id: string }[];
+};
+
+export type Media = {
+  media_key: string;
+  type: "photo" | "video" | "animated_gif";
+  url?: string;
+  preview_image_url?: string;
+  alt_text?: string;
+  width?: number;
+  height?: number;
 };
 
 export type XUser = {
@@ -52,7 +66,7 @@ export type XUser = {
 
 export type SearchResponse = {
   data?: Tweet[];
-  includes?: { users?: XUser[] };
+  includes?: { users?: XUser[]; media?: Media[] };
   meta?: { result_count: number; next_token?: string };
 };
 
@@ -78,12 +92,31 @@ export function getUserByUsername(username: string) {
   return xFetch<{ data?: XUser }>(`/users/by/username/${encodeURIComponent(username)}?${params}`, requireBearer());
 }
 
-export function getUserTweets(userId: string, maxResults = 20) {
+export function getUserTweets(userId: string, maxResults = 20, paginationToken?: string) {
   const params = new URLSearchParams({
     max_results: String(Math.min(Math.max(maxResults, 5), 100)),
     "tweet.fields": TWEET_FIELDS,
+    expansions: "attachments.media_keys",
+    "media.fields": MEDIA_FIELDS,
   });
+  if (paginationToken) params.set("pagination_token", paginationToken);
   return xFetch<SearchResponse>(`/users/${userId}/tweets?${params}`, requireBearer());
+}
+
+export async function getAllUserTweets(userId: string, maxPages: number) {
+  const tweets: Tweet[] = [];
+  const media: Media[] = [];
+  let token: string | undefined;
+  let truncated = false;
+  for (let page = 0; page < maxPages; page++) {
+    const res = await getUserTweets(userId, 100, token);
+    tweets.push(...(res.data ?? []));
+    media.push(...(res.includes?.media ?? []));
+    token = res.meta?.next_token;
+    if (!token) break;
+    if (page === maxPages - 1) truncated = true;
+  }
+  return { tweets, media, truncated };
 }
 
 export function getMe(accessToken: string) {
